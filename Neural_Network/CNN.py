@@ -18,6 +18,8 @@ class DenseLayer:
 
     def _apply_activation(self, x):
         return np.exp(-x)
+    def activationDerivative(self,x):
+        return -np.exp(-x)
 
         
 class Neural_Network:
@@ -38,19 +40,24 @@ class Neural_Network:
     def backprop(self,batch):
         predicted = self.forward(batch.input)
         expected = batch.expected
-        return self.error(predicted,expected,batch.size)
+        self.weightGradient(expected,predicted)
+        return self.error(batch)
 
-    def error(self,predicted,expeceted,size):
-        return np.linalg.norm(predicted-expeceted,ord=2)/size
+    def error(self,batch):
+        return np.linalg.norm(batch.predicted-batch.expeceted,ord=2)/batch.size
+    def errorGradient(self,batch):
+        return 2*(batch.predicted-batch.expected)/batch.size
 
+    #This is done by the matrix linear algebra definiont of backword pass formula for Neural Networks./ A little bit overkill but we will see how my computer does
     def weightGradient(self,expected,predicted,weights):
-        x = np.zeros(layer.shape())
-        ##
-    def biasGradient(self,expected,predicted,weights):
-        return -(predicted-expected)
-        ##
+        pass
 
-        
+    def errorGradient(expected,predicted,weights):
+        pass
+    
+    def biasGradient(self,expected,predicted,weights):
+        pass
+
 
 (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 
