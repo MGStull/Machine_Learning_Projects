@@ -71,17 +71,19 @@ class Neural_Network:
 
 (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 class batch:
-        def __init__(self,indeces):
-            self.size=len(indeces)
-            self.input,self.expected = self.Grab(indeces)
+        def __init__(self,indices):
+            self.size=len(indices)
+            self.input,self.expected = self.Grab(indices)
+            self.indices = indices
         #Pull Data in a K cross format to prevent overfitting
-        def Grab(self,indeces):
+        def Grab(self,indices):
             # Grab the first `self.size` samples from test data
-            X_batch = np.zeros(self.size)
-            Y_batch = np.zeros(self.size)
-            for i in range(0,len(indeces)):    
-                X_batch[i] = x_train[indeces[i]]  
-                Y_batch[i] = y_train[indeces[i]]  
+            X_batch = np.zeros((self.size,28,28))
+            Y_batch = np.zeros(self.size,dtype=int)
+
+            for i in range(0,len(indices)):    
+                X_batch[i] = x_train[indices[i]]  
+                Y_batch[i] = y_train[indices[i]]  
             X_batch = X_batch.reshape(self.size, -1)/255  # Normalize pixel values to [0, 1]
             Y_batch_one_hot = np.zeros((self.size, 10))
             Y_batch_one_hot[np.arange(self.size), Y_batch] = 1
@@ -116,17 +118,18 @@ NN = Neural_Network([
     [64,32],
     [32,10]
     ])
-
+Tbatch = batch([1,10,100,99,10000,1000])
 
 def TEST(testSize,NN):
     # Grab the first `size` samples from test data
     X_batch = x_test[:testSize]
     X_batch = X_batch.reshape(testSize, -1)/255 
     Y_batch =y_test[:testSize]
+    sum=0
     for i in range(testSize):
-        print(NN.guess(X_batch[i]))
         if NN.guess(X_batch[i]) == Y_batch[i]:
             sum +=1
     return (sum/testSize)
-Epoch(100).randTrain(NN)
-TEST(NN,100)
+
+NN.backprop(Tbatch)
+print(TEST(100,NN))
