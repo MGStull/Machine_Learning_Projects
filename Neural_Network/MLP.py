@@ -8,31 +8,38 @@ import random as rand
 
 class DenseLayer:
     def __init__(self, input_size, output_size):
-        self.W = np.random.randn(input_size, output_size) * 0.01
-        self.b = np.zeros((1, output_size))
+        self.W = np.random.randn(input_size, output_size) *np.sqrt(2/input_size)
+        self.B = np.zeros((1, output_size))
         self.dW = None
         self.dB = None
 
     def forward(self, x):
         self.x = np.copy(x)
-        self.z = x@self.W + self.b
+        self.z = x@self.W + self.B
         self.a = self._apply_activation(self.z)
         return self.a
 
-    def _apply_activation(self, x):
-        return np.exp(-x)
-    def activationDerivative(self,x):
-        return -np.exp(-x)
-    def update(self,stepSize=.01):
+    #From Geeks for Geeks
+    def _apply_activation(self,x,alpha=.01):
+        return np.maximum(alpha * x, x)
+
+    #From Geeks for Geeks
+    def activationDerivative(self,x,alpha=.01):
+        dx = np.ones_like(x)
+        dx[x < 0] =alpha
+        return dx
+
+    def update(self,stepSize):
         self.W -= self.dW*stepSize
-        self.b -= self.db*stepSize
+        self.B -= self.dB*stepSize
 
         
 
         
 class Neural_Network:
-    def __init__(self, layers_config):
+    def __init__(self, layers_config,stepSize=.01):
         self.layers = []
+        self.stepSize = stepSize
         for config in layers_config:
             self.layers.append(DenseLayer(*config))
     
@@ -47,10 +54,9 @@ class Neural_Network:
     
     def backprop(self,batch):
         batch.predicted = self.forward(batch.input)
-        expected = batch.expected
         self.weightGradient(batch,self.layers)
         for layer in self.layers:
-            layer.update()
+            layer.update(self.stepSize)
         return self.error(batch)
 
     def error(self,batch):
@@ -58,16 +64,15 @@ class Neural_Network:
     def errorGradient(self,batch):
         return 2*(batch.predicted-batch.expected)/batch.size
 
-    #This is done by the matrix linear algebra definiont of backword pass formula for Neural Networks./ A little bit overkill but we will see how my computer does
     def weightGradient(self,batch,weights):
         delta = self.errorGradient(batch)
         for layer in reversed(self.layers):
             dz=delta*layer.activationDerivative(layer.z)
             dW = layer.x.T @ dz
-            db = np.sum(dz,axis=0,keepdims=True)
+            dB = np.sum(dz,axis=0,keepdims=True)
             delta = dz@layer.W.T
             layer.dW =dW
-            layer.db =db
+            layer.dB =dB
 
 (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 class batch:
@@ -75,9 +80,7 @@ class batch:
             self.size=len(indices)
             self.input,self.expected = self.Grab(indices)
             self.indices = indices
-        #Pull Data in a K cross format to prevent overfitting
         def Grab(self,indices):
-            # Grab the first `self.size` samples from test data
             X_batch = np.zeros((self.size,28,28))
             Y_batch = np.zeros(self.size,dtype=int)
 
@@ -90,30 +93,25 @@ class batch:
             return [X_batch, Y_batch_one_hot]
 class Epoch:
     def __init__(self,k):
-        self.indicesList = [[]]*k
+        self.indicesList = [[] for _ in range(k)]
         self.batches = []
-        randHold = list(range(0,60000))
-        print(self.indicesList)
-        print(int(len(x_train)/k))
-        for i in range(0,k):
-            for j in range(0,int(len(x_train)/k)):
-                #print("randHold Length: ",len(randHold))
-                x =rand.randint(0,len(randHold)-1)
-                #print("Random Index: ",x)
-                #print("self.indicesList[i]",print(len(self.indicesList),"Does not match: ",i))
-                self.indicesList[i].append(randHold.pop(x))
-        print("Complete",len(randHold),len(self.indicesList),self.indicesList[1])
+        randHold = list(range(len(x_train)))
+        rand.shuffle(randHold)
+        chunk_size = len(x_train) // k
+        for i in range(k - 1):
+            self.indicesList[i] = randHold[i*chunk_size:(i+1)*chunk_size]
+        self.indicesList[k - 1] = randHold[(k - 1)*chunk_size:]
+
         for i in self.indicesList:
             self.batches.append(batch(i))
     def randTrain(self,NN):
         for i in self.batches:
             NN.backprop(i) 
-        print("Complete")  
+        #print("Complete")  
 
 
 NN = Neural_Network([
     [784,128],
-    [128,128],
     [128,64],
     [64,32],
     [32,10]
@@ -131,5 +129,20 @@ def TEST(testSize,NN):
             sum +=1
     return (sum/testSize)
 
-NN.backprop(Tbatch)
-print(TEST(100,NN))
+
+TrainEpoch = Epoch(600)
+acc =[]
+acc.append(TEST(10000, NN))
+for i in range(10):
+    TrainEpoch.randTrain(NN)
+    acc.append(TEST(10000, NN))
+    TrainEpoch = Epoch(600)
+
+plt.title("Test Accuracy Over Epochs")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.plot(acc)
+plt.show()
+print(acc)
+
+
