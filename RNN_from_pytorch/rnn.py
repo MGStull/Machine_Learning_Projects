@@ -1,5 +1,5 @@
 #This code was created by following a tutorial by https://docs.pytorch.org/tutorials/intermediate/char_rnn_classification_tutorial.html
-
+#Dont forget to download the dataset from https://github.com/patrickloeber/pytorch-examples/tree/master/rnn-name-classification if you would like to test it
 import torch
 import torch.nn as nn 
 import matplotlib.pyplot as plt 
@@ -51,7 +51,7 @@ print(output.size())
 print(next_hidden.size())
 
 def category_from_output(output):
-    category_idx = torch.argmax(output).item()
+    category_idx = torch.argmax(dim=1).item()
     return all_categories[category_idx]
 
 print(category_from_output(output))

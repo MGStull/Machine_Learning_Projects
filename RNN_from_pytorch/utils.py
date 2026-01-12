@@ -1,4 +1,5 @@
 # data: https://download.pytorch.org/tutorial/data.zip
+#Tutorial Followed by Patrick Loeber https://www.youtube.com/watch?v=0_PgWWmauHk
 import io
 import os
 import unicodedata

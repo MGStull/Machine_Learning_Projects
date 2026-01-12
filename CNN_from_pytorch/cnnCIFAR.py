@@ -28,9 +28,11 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm,trange
+from torch.cuda.amp import autocast, GradScaler
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
 # Hyper-parameters 
 num_epochs = int(input("Desired number of Epochs:"))
@@ -119,12 +121,12 @@ def load_model(path='./cnn.pth'):
 
 load = input("Load Model y or n")[0]=='y'
 if load =='Y' or load == 'y':
-    model = load_model('./cnn.pth')
+    model = load_model('./cnn.pth').to(device)
 else:
-    model = ConvNet()
+    model = ConvNet().to(device)
 
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss().to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 train_loss = np.zeros(num_epochs)
